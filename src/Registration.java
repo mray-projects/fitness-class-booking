@@ -17,17 +17,35 @@ public class Registration {
 
         frame = new JFrame("Register");
 
-        frame.setSize(450, 400);
+        frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new GridLayout(7, 2, 10, 10));
 
         firstNameField = new JTextField();
+        firstNameField.setPreferredSize(new Dimension(400, 50));
+        firstNameField.setFont(new Font("Arial", Font.PLAIN, 20));
+
         lastNameField = new JTextField();
+        lastNameField.setPreferredSize(new Dimension(400, 50));
+        lastNameField.setFont(new Font("Arial", Font.PLAIN, 20));
+
         emailField = new JTextField();
+        emailField.setPreferredSize(new Dimension(400, 50));
+        emailField.setFont(new Font("Arial", Font.PLAIN, 20));
+
         usernameField = new JTextField();
+        usernameField.setPreferredSize(new Dimension(400, 50));
+        usernameField.setFont(new Font("Arial", Font.PLAIN, 20));
+
 
         passwordField = new JPasswordField();
+        passwordField.setPreferredSize(new Dimension(400, 50));
+        passwordField.setFont(new Font("Arial", Font.PLAIN, 20));
+
         reenterPasswordField = new JPasswordField();
+        reenterPasswordField.setPreferredSize(new Dimension(400, 50));
+        reenterPasswordField.setFont(new Font("Arial", Font.PLAIN, 20));
+
 
         frame.add(new JLabel("First Name:"));
         frame.add(firstNameField);
