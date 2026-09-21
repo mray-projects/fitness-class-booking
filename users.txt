@@ -1,1 +1,3 @@
 Mohamed,Rayhan,r@gmail.com,r1,r1
+Mohamed,Zeavudeen,mohd.zea@gmail.com,zeavu,password
+mohd,zea,md.zea@gmail.com,zeavu,password1
