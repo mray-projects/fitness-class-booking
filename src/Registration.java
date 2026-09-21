@@ -1,6 +1,9 @@
 import javax.swing.*;
 import java.awt.*;
-
+import java.net.URI;
+import java.net.http.HttpClient; //sends request
+import java.net.http.HttpRequest; //builds request
+import java.net.http.HttpResponse; //receives request
 public class Registration {
 
     JFrame frame;
