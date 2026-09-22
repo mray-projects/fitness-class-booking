@@ -1,9 +1,8 @@
+import api.UserAPI;
 import javax.swing.*;
 import java.awt.*;
-import java.net.URI;
-import java.net.http.HttpClient; //sends request
-import java.net.http.HttpRequest; //builds request
-import java.net.http.HttpResponse; //receives request
+import api.UserAPI;
+
 public class Registration {
 
     JFrame frame;
@@ -40,7 +39,6 @@ public class Registration {
         usernameField.setPreferredSize(new Dimension(400, 50));
         usernameField.setFont(new Font("Arial", Font.PLAIN, 20));
 
-
         passwordField = new JPasswordField();
         passwordField.setPreferredSize(new Dimension(400, 50));
         passwordField.setFont(new Font("Arial", Font.PLAIN, 20));
@@ -48,7 +46,6 @@ public class Registration {
         reenterPasswordField = new JPasswordField();
         reenterPasswordField.setPreferredSize(new Dimension(400, 50));
         reenterPasswordField.setFont(new Font("Arial", Font.PLAIN, 20));
-
 
         frame.add(new JLabel("First Name:"));
         frame.add(firstNameField);
@@ -117,23 +114,34 @@ public class Registration {
             return;
         }
 
-        User user = new User(
-                firstName,
-                lastName,
-                email,
-                username,
-                password
-        );
+        try {
 
-        user.saveUser();
+            String response = UserAPI.registerUser(
+                    firstName,
+                    lastName,
+                    email,
+                    username,
+                    password
+            );
 
-        JOptionPane.showMessageDialog(
-                frame,
-                "Thank you for registering!"
-        );
+            JOptionPane.showMessageDialog(
+                    frame,
+                    response
+            );
 
-        frame.dispose();
+            frame.dispose();
 
-        new loginPage();
+            new loginPage();
+
+        } catch (Exception e) {
+
+            JOptionPane.showMessageDialog(
+                    frame,
+                    "Could not connect to the server."
+            );
+
+            e.printStackTrace();
+        }
     }
 }
+

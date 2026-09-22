@@ -1,50 +1,38 @@
-
 import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-
 import java.sql.SQLIntegrityConstraintViolationException;
 
 public class UserHandler {
 
-    // This method handles registration requests sent to /users/register.
+    // Handles user registration
     public static void handleRegister(HttpExchange exchange) throws IOException {
 
-        // Gets the data (request body) that was sent by the client.
-        // In our case, this contains the JSON registration data.
+        // Get the data sent by the client
         InputStream inputStream = exchange.getRequestBody();
 
-        // Reads all the data from the request body and converts it into a String.
-        // The String will contain the JSON sent by TestClient.
         String requestBody = new String(
                 inputStream.readAllBytes(),
                 StandardCharsets.UTF_8
         );
 
-        // Creates a Gson object.
-        // Gson is used to convert between JSON and Java objects.
+        // Convert the JSON data into a User object
         Gson gson = new Gson();
 
-        // Converts the JSON String into a Java User object.
-        // requestBody = the JSON data
-        // User.class = tells Gson what type of Java object to create.
         User user = gson.fromJson(requestBody, User.class);
 
-        // Prints the information received from the client to the server console.
         System.out.println("Received user:");
         System.out.println("Name: " + user.getFirst_name() + " " + user.getLast_name());
         System.out.println("Email: " + user.getEmail());
         System.out.println("Username: " + user.getUsername());
         System.out.println("Phone: " + user.getPhone());
 
-        // Save user to MySQL
+        // Save the user to MySQL
         try {
 
-            // Calls the UserDAO to save the user's information in MySQL.
-            // The information is taken from the User object created by Gson.
             UserDAO.registerUser(
                     user.getFirst_name(),
                     user.getLast_name(),
@@ -54,37 +42,97 @@ public class UserHandler {
                     user.getPhone()
             );
 
-            // Creates the message that will be sent back to the client.
             String response = "User registered successfully!";
 
-            // Sends HTTP status code 200 to indicate that the request was successful.
-            // response.length() tells the server how many bytes of data will be sent.
             exchange.sendResponseHeaders(200, response.length());
 
-            // Sends the response message back to the client.
             exchange.getResponseBody().write(response.getBytes());
+            exchange.getResponseBody().close();
 
-            // Closes the response.
+        } catch (SQLIntegrityConstraintViolationException e) {
+
+            // This happens when MySQL rejects the registration
+            // because the email or username already exists.
+            String response = "Username or email already exists!";
+
+            // 409 means the request conflicts with existing data.
+            exchange.sendResponseHeaders(409, response.length());
+
+            exchange.getResponseBody().write(response.getBytes());
             exchange.getResponseBody().close();
 
         } catch (Exception e) {
 
-            // Prints the error details in the server console.
-            // This helps us identify what went wrong.
             e.printStackTrace();
 
-            // Creates the message that will be sent if registration fails.
             String response = "Registration failed!";
 
-            // Sends HTTP status code 500 to indicate that a server-side error occurred.
             exchange.sendResponseHeaders(500, response.length());
 
-            // Sends the failure message back to the client.
             exchange.getResponseBody().write(response.getBytes());
+            exchange.getResponseBody().close();
+        }
+    }
 
-            // Closes the response.
+
+    // Handles user login
+    public static void handleLogin(HttpExchange exchange) throws IOException {
+
+        // Get the login data sent by the client
+        InputStream inputStream = exchange.getRequestBody();
+
+        String requestBody = new String(
+                inputStream.readAllBytes(),
+                StandardCharsets.UTF_8
+        );
+
+        // Convert the JSON data into a User object
+        Gson gson = new Gson();
+
+        User user = gson.fromJson(requestBody, User.class);
+
+        System.out.println("Login attempt:");
+        System.out.println("Username: " + user.getUsername());
+
+        try {
+
+            // Check the username and password in MySQL
+            boolean loginSuccessful = UserDAO.loginUser(
+                    user.getUsername(),
+                    user.getPassword()
+            );
+
+            if (loginSuccessful) {
+
+                // Login details are correct
+                String response = "Login successful!";
+
+                exchange.sendResponseHeaders(200, response.length());
+
+                exchange.getResponseBody().write(response.getBytes());
+                exchange.getResponseBody().close();
+
+            } else {
+
+                // Username or password is incorrect
+                String response = "Incorrect username or password.";
+
+                exchange.sendResponseHeaders(401, response.length());
+
+                exchange.getResponseBody().write(response.getBytes());
+                exchange.getResponseBody().close();
+            }
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+            String response = "Login failed!";
+
+            exchange.sendResponseHeaders(500, response.length());
+
+            exchange.getResponseBody().write(response.getBytes());
             exchange.getResponseBody().close();
         }
     }
 }
-

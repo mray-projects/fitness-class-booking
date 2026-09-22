@@ -1,5 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
+import api.UserAPI;
 
 public class loginPage {
 
@@ -83,7 +84,7 @@ public class loginPage {
 
         frame.add(mainPanel);
 
-        //login button
+        // Login button
         loginButton.addActionListener(e -> login());
 
 
@@ -107,22 +108,29 @@ public class loginPage {
         String password =
                 new String(passwordField.getPassword());
 
-        User user = User.login(username, password);
+        try {
 
-        if (user != null) {
-
-            JOptionPane.showMessageDialog(
-                    frame,
-                    "Welcome to the Fitness Class, "
-                            + user.firstName + "!"
+            // Send the username and password to the server through the API
+            String response = UserAPI.loginUser(
+                    username,
+                    password
             );
 
-        } else {
-
+            // Show the response received from the server
             JOptionPane.showMessageDialog(
                     frame,
-                    "Incorrect username or password."
+                    response
             );
+
+        } catch (Exception e) {
+
+            // This happens if the client cannot connect to the server
+            JOptionPane.showMessageDialog(
+                    frame,
+                    "Could not connect to the server."
+            );
+
+            e.printStackTrace();
         }
     }
 }
