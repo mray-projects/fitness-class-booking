@@ -11,6 +11,16 @@ public class UserHandler {
     // Handles user registration
     public static void handleRegister(HttpExchange exchange) throws IOException {
 
+        // Allow the web frontend to communicate with the server
+        exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "POST, OPTIONS");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
+
+        if (exchange.getRequestMethod().equalsIgnoreCase("OPTIONS")) {
+            exchange.sendResponseHeaders(204, -1);
+            return;
+        }
+
         // Get the data sent by the client
         InputStream inputStream = exchange.getRequestBody();
 
@@ -77,6 +87,16 @@ public class UserHandler {
 
     // Handles user login
     public static void handleLogin(HttpExchange exchange) throws IOException {
+
+        // Allow the web frontend to communicate with the server
+        exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "POST, OPTIONS");
+        exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
+
+        if (exchange.getRequestMethod().equalsIgnoreCase("OPTIONS")) {
+            exchange.sendResponseHeaders(204, -1);
+            return;
+        }
 
         // Get the login data sent by the client
         InputStream inputStream = exchange.getRequestBody();
