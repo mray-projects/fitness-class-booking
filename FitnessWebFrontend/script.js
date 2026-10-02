@@ -1,5 +1,5 @@
 
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", async function () {
 
     // registration
 
@@ -73,9 +73,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 const result = await response.text();
 
-                if (response.ok) {
+                if (response.ok)
+                {
                     alert("Login successful!");
-                } else {
+                    window.location.href = "classes.html";
+                }
+
+                 else {
                     alert("Login failed: " + result);
                 }
 
@@ -84,6 +88,45 @@ document.addEventListener("DOMContentLoaded", function () {
                 console.error(error);
             }
         });
+    }
+
+    // view classes
+
+    const classesContainer = document.getElementById("classesContainer");
+
+    if (classesContainer) {
+
+        try {
+
+            const response = await fetch("http://localhost:8080/classes");
+
+            const classes = await response.json();
+
+            classesContainer.innerHTML = "";
+
+            classes.forEach(function (fitnessClass) {
+
+                const classDiv = document.createElement("div");
+
+                classDiv.innerHTML = `
+                    <h3>${fitnessClass.name}</h3>
+                    <p>Date: ${fitnessClass.class_date}</p>
+                    <p>Time: ${fitnessClass.class_time}</p>
+                    <p>Capacity: ${fitnessClass.capacity}</p>
+                    <p>Location: ${fitnessClass.location || "Not specified"}</p>
+                    <hr>
+                `;
+
+                classesContainer.appendChild(classDiv);
+            });
+
+        } catch (error) {
+
+            classesContainer.innerHTML =
+                "Could not load classes.";
+
+            console.error(error);
+        }
     }
 
 });
