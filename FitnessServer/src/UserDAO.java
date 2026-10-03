@@ -45,6 +45,9 @@ public class UserDAO {
     // Check whether a username and password are correct
     // Returns the user's ID if login is successful
     // Returns -1 if login fails
+    // Check whether a username and password are correct
+// Returns the user's ID if login is successful
+// Returns -1 if login fails
     public static int loginUser(
             String username,
             String password
@@ -72,7 +75,23 @@ public class UserDAO {
 
         // Check if a matching user was found
         if (resultSet.next()) {
+
             userId = resultSet.getInt("user_id");
+
+            // Update the user's last login date and time
+            String updateSql =
+                    "UPDATE User " +
+                            "SET last_login = CURRENT_TIMESTAMP " +
+                            "WHERE user_id = ?";
+
+            PreparedStatement updateStatement =
+                    connection.prepareStatement(updateSql);
+
+            updateStatement.setInt(1, userId);
+
+            updateStatement.executeUpdate();
+
+            updateStatement.close();
         }
 
         // Close the database resources
