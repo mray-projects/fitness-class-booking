@@ -43,13 +43,15 @@ public class UserDAO {
 
 
     // Check whether a username and password are correct
-    public static boolean loginUser(
+    // Returns the user's ID if login is successful
+    // Returns -1 if login fails
+    public static int loginUser(
             String username,
             String password
     ) throws SQLException {
 
-        // SQL statement to find a user with the given username and password
-        String sql = "SELECT * FROM User " +
+        // SQL statement to find the user with the given username and password
+        String sql = "SELECT user_id FROM User " +
                 "WHERE username = ? AND password = ?";
 
         // Connect to the MySQL database
@@ -65,15 +67,20 @@ public class UserDAO {
         // Execute the SELECT query
         var resultSet = statement.executeQuery();
 
+        // Store the user's ID
+        int userId = -1;
+
         // Check if a matching user was found
-        boolean userExists = resultSet.next();
+        if (resultSet.next()) {
+            userId = resultSet.getInt("user_id");
+        }
 
         // Close the database resources
         resultSet.close();
         statement.close();
         connection.close();
 
-        // Return true if the login details are correct
-        return userExists;
+        // Return the user's ID
+        return userId;
     }
 }

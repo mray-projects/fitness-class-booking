@@ -18,6 +18,7 @@ public class FitnessServer {
         server.createContext("/users/register", UserHandler::handleRegister);
         server.createContext("/users/login", UserHandler::handleLogin);
         server.createContext("/classes", ClassHandler::handleGetClasses);
+        server.createContext("/bookings", BookingHandler::handleCreateBooking);
 
         server.start();
 

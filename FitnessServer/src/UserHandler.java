@@ -88,7 +88,6 @@ public class UserHandler {
     // Handles user login
     public static void handleLogin(HttpExchange exchange) throws IOException {
 
-        // Allow the web frontend to communicate with the server
         exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
         exchange.getResponseHeaders().add("Access-Control-Allow-Methods", "POST, OPTIONS");
         exchange.getResponseHeaders().add("Access-Control-Allow-Headers", "Content-Type");
@@ -98,7 +97,6 @@ public class UserHandler {
             return;
         }
 
-        // Get the login data sent by the client
         InputStream inputStream = exchange.getRequestBody();
 
         String requestBody = new String(
@@ -106,7 +104,6 @@ public class UserHandler {
                 StandardCharsets.UTF_8
         );
 
-        // Convert the JSON data into a User object
         Gson gson = new Gson();
 
         User user = gson.fromJson(requestBody, User.class);
@@ -116,30 +113,51 @@ public class UserHandler {
 
         try {
 
-            // Check the username and password in MySQL
-            boolean loginSuccessful = UserDAO.loginUser(
+            // Try to log in and get the user's ID
+            int userId = UserDAO.loginUser(
                     user.getUsername(),
                     user.getPassword()
             );
 
-            if (loginSuccessful) {
+            if (userId != -1) {
 
-                // Login details are correct
-                String response = "Login successful!";
+                // Create a JSON response containing the user ID
+                String response = """
+                    {
+                        "message": "Login successful!",
+                        "user_id": %d
+                    }
+                    """.formatted(userId);
 
-                exchange.sendResponseHeaders(200, response.length());
+                exchange.getResponseHeaders().add(
+                        "Content-Type",
+                        "application/json"
+                );
 
-                exchange.getResponseBody().write(response.getBytes());
+                exchange.sendResponseHeaders(
+                        200,
+                        response.getBytes(StandardCharsets.UTF_8).length
+                );
+
+                exchange.getResponseBody().write(
+                        response.getBytes(StandardCharsets.UTF_8)
+                );
+
                 exchange.getResponseBody().close();
 
             } else {
 
-                // Username or password is incorrect
                 String response = "Incorrect username or password.";
 
-                exchange.sendResponseHeaders(401, response.length());
+                exchange.sendResponseHeaders(
+                        401,
+                        response.getBytes(StandardCharsets.UTF_8).length
+                );
 
-                exchange.getResponseBody().write(response.getBytes());
+                exchange.getResponseBody().write(
+                        response.getBytes(StandardCharsets.UTF_8)
+                );
+
                 exchange.getResponseBody().close();
             }
 
@@ -149,9 +167,15 @@ public class UserHandler {
 
             String response = "Login failed!";
 
-            exchange.sendResponseHeaders(500, response.length());
+            exchange.sendResponseHeaders(
+                    500,
+                    response.getBytes(StandardCharsets.UTF_8).length
+            );
 
-            exchange.getResponseBody().write(response.getBytes());
+            exchange.getResponseBody().write(
+                    response.getBytes(StandardCharsets.UTF_8)
+            );
+
             exchange.getResponseBody().close();
         }
     }

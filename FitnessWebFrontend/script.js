@@ -1,4 +1,3 @@
-
 document.addEventListener("DOMContentLoaded", async function () {
 
     // registration
@@ -71,15 +70,18 @@ document.addEventListener("DOMContentLoaded", async function () {
                     body: JSON.stringify(loginData)
                 });
 
-                const result = await response.text();
+                const result = await response.json();
 
-                if (response.ok)
-                {
+                if (response.ok) {
+
+                    // Save the logged-in user's ID
+                    localStorage.setItem("user_id", result.user_id);
+
                     alert("Login successful!");
                     window.location.href = "classes.html";
-                }
 
-                 else {
+                } else {
+
                     alert("Login failed: " + result);
                 }
 
@@ -89,6 +91,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             }
         });
     }
+
 
     // view classes
 
@@ -114,6 +117,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                     <p>Time: ${fitnessClass.class_time}</p>
                     <p>Capacity: ${fitnessClass.capacity}</p>
                     <p>Location: ${fitnessClass.location || "Not specified"}</p>
+
+                    <button onclick="bookClass(${fitnessClass.class_id})">
+                        Book
+                    </button>
+
                     <hr>
                 `;
 
@@ -131,3 +139,48 @@ document.addEventListener("DOMContentLoaded", async function () {
 
 });
 
+
+// Book a fitness class
+async function bookClass(classId) {
+
+    // Get the logged-in user's ID
+    const userId = localStorage.getItem("user_id");
+
+    if (!userId) {
+        alert("Please log in first.");
+        return;
+    }
+
+    // Create the booking data
+    const bookingData = {
+        user_id: parseInt(userId),
+        class_id: classId
+    };
+
+    try {
+
+        const response = await fetch("http://localhost:8080/bookings", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(bookingData)
+        });
+
+        const result = await response.text();
+
+        if (response.ok) {
+
+            alert("Class booked successfully!");
+
+        } else {
+
+            alert("Booking failed: " + result);
+        }
+
+    } catch (error) {
+
+        alert("Could not connect to the server.");
+        console.error(error);
+    }
+}
