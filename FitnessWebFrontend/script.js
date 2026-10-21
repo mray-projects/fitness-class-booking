@@ -1,4 +1,20 @@
+
 document.addEventListener("DOMContentLoaded", async function () {
+
+    // logout
+
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", function () {
+
+            localStorage.removeItem("user_id");
+
+            window.location.href = "main.html";
+
+        });
+    }
+
 
     // registration
 
@@ -141,6 +157,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
 
 // Book a fitness class
+
 async function bookClass(classId) {
 
     // Get the logged-in user's ID
