@@ -5,7 +5,8 @@ import java.sql.ResultSet;
 public class BookingDAO {
 
     // Create a booking
-    public static void createBooking(int userId, int classId) throws Exception {
+    public static void createBooking(int userId, int classId) throws Exception
+    {
 
         Connection connection = DatabaseConnection.getConnection();
 
@@ -110,4 +111,71 @@ public class BookingDAO {
         insertStatement.close();
         connection.close();
     }
+
+
+    // Cancel a booking
+    public static void cancelBooking(int userId, int bookingId)
+            throws Exception
+    {
+
+        Connection connection = DatabaseConnection.getConnection();
+
+        try {
+            // Find the booking and its class start time
+            String checkSql =
+                    "SELECT b.status, " +
+                            "TIMESTAMP(f.class_date, f.class_time) AS start_time " +
+                            "FROM Booking b " +
+                            "JOIN FitnessClass f ON b.class_id = f.class_id " +
+                            "WHERE b.booking_id = ? AND b.user_id = ?";
+
+            try (PreparedStatement statement =
+                         connection.prepareStatement(checkSql)) {
+
+                statement.setInt(1, bookingId);
+                statement.setInt(2, userId);
+
+                try (ResultSet result = statement.executeQuery()) {
+
+                    if (!result.next()) {
+                        throw new Exception("Booking not found.");
+                    }
+
+                    if (!result.getString("status").equals("CONFIRMED")) {
+                        throw new Exception("This booking is already cancelled.");
+                    }
+
+                    if (!result.getTimestamp("start_time")
+                            .after(new java.sql.Timestamp(System.currentTimeMillis()))) {
+                        throw new Exception(
+                                "Cannot cancel after the class has started."
+                        );
+                    }
+                }
+            }
+
+            // Cancel only if the booking is still confirmed
+            String updateSql =
+                    "UPDATE Booking SET status = 'CANCELLED' " +
+                            "WHERE booking_id = ? AND user_id = ? " +
+                            "AND status = 'CONFIRMED'";
+
+            try (PreparedStatement statement =
+                         connection.prepareStatement(updateSql)) {
+
+                statement.setInt(1, bookingId);
+                statement.setInt(2, userId);
+
+                if (statement.executeUpdate() == 0) {
+                    throw new Exception(
+                            "Booking could not be cancelled. Please try again."
+                    );
+                }
+            }
+
+        } finally {
+            connection.close();
+        }
+    }
+
 }
