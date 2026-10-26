@@ -1,6 +1,10 @@
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.LinkedHashMap;
 
 public class BookingDAO {
 
@@ -177,5 +181,85 @@ public class BookingDAO {
             connection.close();
         }
     }
+
+
+    // Retrieve all bookings belonging to a user
+    public static List<Map<String, Object>> getBookingsForUser(int userId)
+            throws Exception {
+
+        // Store the bookings retrieved from the database
+        List<Map<String, Object>> bookings = new ArrayList<>();
+
+        Connection connection = DatabaseConnection.getConnection();
+
+        try {
+
+            // Join Booking and FitnessClass to retrieve class details
+            String sql =
+                    "SELECT b.booking_id, b.status, " +
+                            "f.name AS class_name, " +
+                            "f.class_date, f.class_time, f.location " +
+                            "FROM Booking b " +
+                            "JOIN FitnessClass f ON b.class_id = f.class_id " +
+                            "WHERE b.user_id = ? " +
+                            "ORDER BY f.class_date, f.class_time";
+
+            try (PreparedStatement statement =
+                         connection.prepareStatement(sql)) {
+
+                // Retrieve bookings for the specified user only
+                statement.setInt(1, userId);
+
+                try (ResultSet result = statement.executeQuery()) {
+
+                    // Process each booking returned by the query
+                    while (result.next()) {
+
+                        Map<String, Object> booking =
+                                new LinkedHashMap<>();
+
+                        booking.put(
+                                "booking_id",
+                                result.getInt("booking_id")
+                        );
+
+                        booking.put(
+                                "status",
+                                result.getString("status")
+                        );
+
+                        booking.put(
+                                "class_name",
+                                result.getString("class_name")
+                        );
+
+                        booking.put(
+                                "class_date",
+                                result.getString("class_date")
+                        );
+
+                        booking.put(
+                                "class_time",
+                                result.getString("class_time")
+                        );
+
+                        booking.put(
+                                "location",
+                                result.getString("location")
+                        );
+
+                        bookings.add(booking);
+                    }
+                }
+            }
+
+        } finally {
+            connection.close();
+        }
+
+        // Return the list of bookings to BookingHandler
+        return bookings;
+    }
+
 
 }

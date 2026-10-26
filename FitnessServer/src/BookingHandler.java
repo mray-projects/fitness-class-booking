@@ -3,11 +3,14 @@ import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
 
 import java.io.IOException;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
 
 public class BookingHandler {
 
-    // Handles booking creation, cancellation, and browser requests
+    // Handles booking creation, cancellation, and retrieval
     public static void handleCreateBooking(HttpExchange exchange)
             throws IOException {
 
@@ -16,9 +19,10 @@ public class BookingHandler {
                 "Access-Control-Allow-Origin", "*"
         );
 
-        // Specify which HTTP methods the frontend is allowed to use
+        // Specify which HTTP methods the frontend can use
         exchange.getResponseHeaders().set(
-                "Access-Control-Allow-Methods", "POST, DELETE, OPTIONS"
+                "Access-Control-Allow-Methods",
+                "GET, POST, DELETE, OPTIONS"
         );
 
         // Allow the frontend to send JSON data
@@ -26,7 +30,7 @@ public class BookingHandler {
                 "Access-Control-Allow-Headers", "Content-Type"
         );
 
-        // Browsers may send an OPTIONS request before POST or DELETE
+        // Handle browser preflight requests
         if (exchange.getRequestMethod().equalsIgnoreCase("OPTIONS")) {
             exchange.sendResponseHeaders(204, -1);
             exchange.close();
@@ -37,6 +41,58 @@ public class BookingHandler {
 
             // Identify which operation the frontend is requesting
             String method = exchange.getRequestMethod();
+
+            // GET: Retrieve bookings for a specific user
+            if (method.equalsIgnoreCase("GET")) {
+
+                // Read the user ID from the URL query string
+                String query = exchange.getRequestURI().getRawQuery();
+
+                if (query == null) {
+                    sendResponse(exchange, 400, "Missing user_id.");
+                    return;
+                }
+
+                String userIdValue = null;
+
+                // Find the user_id parameter in the query string
+                for (String parameter : query.split("&")) {
+
+                    String[] parts = parameter.split("=", 2);
+
+                    if (parts.length == 2 &&
+                            parts[0].equals("user_id")) {
+
+                        userIdValue = URLDecoder.decode(
+                                parts[1],
+                                StandardCharsets.UTF_8
+                        );
+
+                        break;
+                    }
+                }
+
+                // Check that the user ID was supplied
+                if (userIdValue == null || userIdValue.isBlank()) {
+                    sendResponse(exchange, 400, "Missing user_id.");
+                    return;
+                }
+
+                // Convert the user ID from text to an integer
+                int userId = Integer.parseInt(userIdValue);
+
+                // Retrieve this user's bookings from the database
+                List<Map<String, Object>> bookings =
+                        BookingDAO.getBookingsForUser(userId);
+
+                // Convert the booking list into JSON
+                Gson gson = new Gson();
+                String response = gson.toJson(bookings);
+
+                // Return the bookings to the frontend
+                sendResponse(exchange, 200, response);
+                return;
+            }
 
             // Read the JSON data sent by the frontend
             String requestBody = new String(
@@ -52,7 +108,7 @@ public class BookingHandler {
             // POST: Create a new fitness class booking
             if (method.equalsIgnoreCase("POST")) {
 
-                // Convert the JSON data into a BookingRequest object
+                // Convert JSON into a BookingRequest object
                 BookingRequest request =
                         gson.fromJson(requestBody, BookingRequest.class);
 
@@ -64,17 +120,15 @@ public class BookingHandler {
 
                 // Message returned if booking creation succeeds
                 response = "Class booked successfully!";
-
             }
 
             // DELETE: Cancel an existing booking
             else if (method.equalsIgnoreCase("DELETE")) {
 
-                // Convert the JSON data into a CancelRequest object
+                // Convert JSON into a CancelRequest object
                 CancelRequest request =
                         gson.fromJson(requestBody, CancelRequest.class);
 
-                // Ask the DAO to cancel the booking
                 // The DAO checks ownership, status, and class start time
                 BookingDAO.cancelBooking(
                         request.user_id,
@@ -83,16 +137,11 @@ public class BookingHandler {
 
                 // Message returned if cancellation succeeds
                 response = "Booking cancelled successfully!";
-
             }
 
-            // Reject any HTTP method other than POST, DELETE, or OPTIONS
+            // Reject unsupported HTTP methods
             else {
-                sendResponse(
-                        exchange,
-                        405,
-                        "Method not allowed."
-                );
+                sendResponse(exchange, 405, "Method not allowed.");
                 return;
             }
 
@@ -115,7 +164,6 @@ public class BookingHandler {
         }
     }
 
-
     // Sends an HTTP response back to the frontend
     private static void sendResponse(
             HttpExchange exchange,
@@ -129,24 +177,20 @@ public class BookingHandler {
         // Send the HTTP status code and response length
         exchange.sendResponseHeaders(statusCode, bytes.length);
 
-        // Send the response message and close the connection
+        // Send the response and close the connection
         exchange.getResponseBody().write(bytes);
         exchange.close();
     }
 
-
     // Represents the data received when a user books a class
     static class BookingRequest {
-
-        int user_id;   // ID of the user making the booking
-        int class_id;  // ID of the fitness class being booked
+        int user_id;
+        int class_id;
     }
-
 
     // Represents the data received when a user cancels a booking
     static class CancelRequest {
-
-        int user_id;     // ID of the user requesting cancellation
-        int booking_id;  // ID of the specific booking to cancel
+        int user_id;
+        int booking_id;
     }
 }
